@@ -2,25 +2,28 @@
 package se.kth.carInspection.controller;
 import se.kth.carInspection.exceptions.IlegalLicenceNumberException;
 import se.kth.carInspection.integration.ExternalCheckingRegNoSystem;
-import se.kth.carInspection.integration.InspectionRegistry;
 import se.kth.carInspection.data.InspectionDTO;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+
+import java.util.*;
+
 import se.kth.carInspection.data.InspectionRegistriesCollection;
 import se.kth.carInspection.integration.Vehicle;
 import se.kth.carInspection.model.InspectionResultCollection;
+import se.kth.carInspection.model.InspectionsSubject;
+import se.kth.carInspection.view.InspectionsObserver;
+
 /**
  * Inspection Process deals with everything needed in order to provide inspection
  * @author Lena Shervarly
  * @version 0.1
  */
-public class InspectionProcess {
+public class InspectionProcess implements InspectionsSubject{
     private InspectorDTO inspectorWhoLogsIn;
     private ExternalCheckingRegNoSystem checkingRegNo;
     private InspectionRegistriesCollection inspectionRegistriesCollection;
     private ArrayList<InspectionDTO> inspectionsForVehicle;
-    
+    private ArrayList<InspectionsObserver> observers;
+
     /**
      * Created Inspection Process on the base of login details of the Inspector
      * @param inspector inspector who initializes the inspection process
@@ -29,6 +32,7 @@ public class InspectionProcess {
         inspectorWhoLogsIn = inspector;
         checkingRegNo = new ExternalCheckingRegNoSystem();
         inspectionRegistriesCollection = new InspectionRegistriesCollection();
+        observers = new ArrayList<>();
     }
     
     /**
@@ -43,7 +47,7 @@ public class InspectionProcess {
     /**
      * Entering the registration number of the <code>vehicleBeingInspected</code> to the system
      * @param vehicleBeingInspected the car, which enters the garage for the inspection
-     * @return true if the operation of entering the registration number to the system was successful 
+     * @return true if the operation of entering the registration number to the system was successful
      */
     public boolean enterVehicleRegNumber(Vehicle vehicleBeingInspected){
         if(checkingRegNo.getApprovalOfTheCarRegNo(vehicleBeingInspected.getRegistrationNumber()))
@@ -103,6 +107,44 @@ public class InspectionProcess {
         for(Map.Entry<InspectionDTO, Boolean> result : resultsCollection.entrySet()) {
             inspectionResults.saveInspectionResult(result.getKey(), true);
         }
+
+        notifyObservers();
     }
 
+//    public int getPassedInspections() {
+//        Collection<Boolean> resultValues = results.values();
+//        int passedResultsNumber = 0;
+//        for (Boolean passed : resultValues) {
+//            if (passed == true) {
+//                passedResultsNumber++;
+//            }
+//        }
+//
+//        return passedResultsNumber;
+//    }
+//
+//    public int getFailedInspections() {
+//        return results.values().size() - getPassedInspections();
+//    }
+
+    @Override
+    public void register(InspectionsObserver o) {
+        observers.add(o);
+    }
+
+    @Override
+    public void unregister(InspectionsObserver o) {
+        observers.remove(o);
+    }
+
+    @Override
+    public void notifyObservers() {
+        Random rand = new Random();
+        int max = 10;
+        int min = 1;
+
+        for(InspectionsObserver o : observers) {
+            o.update(rand.nextInt((max - min) + 1) + min, rand.nextInt((max - min) + 1) + min);
+        }
+    }
 }

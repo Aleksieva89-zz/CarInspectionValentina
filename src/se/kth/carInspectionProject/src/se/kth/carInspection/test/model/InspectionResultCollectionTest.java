@@ -34,5 +34,4 @@ public class InspectionResultCollectionTest {
     public void printAllResults() throws Exception {
 
     }
-
 }
